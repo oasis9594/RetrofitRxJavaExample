@@ -16,7 +16,10 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -24,6 +27,8 @@ import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import io.reactivex.Observable;
 import io.reactivex.Observer;
@@ -35,6 +40,7 @@ import io.reactivex.schedulers.Schedulers;
 public class CSVActivity extends AppCompatActivity {
 
     Button csvbutton;
+    String filename=null;
     String path_to_csv=null;
     public static final int MY_PERMISSIONS_REQUEST_READ_CONTACTS=123;
     @Override
@@ -61,6 +67,11 @@ public class CSVActivity extends AppCompatActivity {
                             @Override
                             public void onComplete() {
                                 Toast.makeText(CSVActivity.this.getApplicationContext(), "CSV stored at: "+path_to_csv, Toast.LENGTH_LONG).show();
+                                try {
+                                    zip(filename+".csv", filename+".zip");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
                             }
 
                             @Override
@@ -77,7 +88,8 @@ public class CSVActivity extends AppCompatActivity {
                                 String TimeStampDB = sdf.format(cal.getTime());
                                 path_to_csv=getExternalFilesDir(null).getAbsolutePath();
                                 Log.e("path",""+path_to_csv);
-                                myFile = new File(getExternalFilesDir(null).getAbsolutePath()+"/Export_"+TimeStampDB+ SystemClock.currentThreadTimeMillis()+".csv");
+                                filename=getExternalFilesDir(null).getAbsolutePath()+"/Export_"+TimeStampDB+ SystemClock.currentThreadTimeMillis();
+                                myFile = new File(filename+".csv");
                                 FileOutputStream fOut = null;
                                 try {
                                     fOut = new FileOutputStream(myFile);
@@ -108,6 +120,28 @@ public class CSVActivity extends AppCompatActivity {
             }
         });
 
+    }
+    public static void zip(String file, String zipFile) throws IOException {
+        BufferedInputStream origin = null;
+        ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
+        try {
+            byte data[] = new byte[100000];
+
+            FileInputStream fi = new FileInputStream(file);
+            origin = new BufferedInputStream(fi, 100000);
+            try {
+                ZipEntry entry = new ZipEntry(file.substring(file.lastIndexOf("/") + 1));
+                out.putNextEntry(entry);
+                int count;
+                while ((count = origin.read(data, 0, 100000)) != -1) {
+                    out.write(data, 0, count);
+                }
+            } finally {
+                origin.close();
+            }
+        } finally {
+            out.close();
+        }
     }
     public void requestPermission()
     {
