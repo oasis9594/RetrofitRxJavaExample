@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">RetrofitRx</string>
+    <string name="image_key">imageKey</string>
+
+    <string name="title_activity_population_flag">PopulationFlag</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+</resources>
