@@ -3,17 +3,23 @@ package com.example.dell.retrofitrx;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.os.SystemClock;
 import android.provider.ContactsContract;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedInputStream;
@@ -42,12 +48,17 @@ public class CSVActivity extends AppCompatActivity {
     Button csvbutton;
     String filename=null;
     String path_to_csv=null;
+    RecyclerView csvlist;
+    CSVAdapter csvAdapter;
+    CoordinatorLayout coordinatorLayout;
     public static final int MY_PERMISSIONS_REQUEST_READ_CONTACTS=123;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_csv);
-        csvbutton=(Button)findViewById(R.id.csvbutton);
+        setContentView(R.layout.csv_list);
+        coordinatorLayout=(CoordinatorLayout)findViewById(R.id.coordinatorLayout);
+        csvbutton=(Button)findViewById(R.id.convertToCSV);
+        csvlist=(RecyclerView)findViewById(R.id.csvlist);
         requestPermission();
     }
     public void doTask()
@@ -66,12 +77,18 @@ public class CSVActivity extends AppCompatActivity {
 
                             @Override
                             public void onComplete() {
-                                Toast.makeText(CSVActivity.this.getApplicationContext(), "CSV stored at: "+path_to_csv, Toast.LENGTH_LONG).show();
                                 try {
                                     zip(filename+".csv", filename+".zip");
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
+
+                                Snackbar snackbar = Snackbar
+                                        .make(coordinatorLayout, "File stored at: "+path_to_csv, Snackbar.LENGTH_LONG);
+
+                                // Changing message text color
+                                //snackbar.setActionTextColor(Color.RED);
+                                snackbar.show();
                             }
 
                             @Override
@@ -176,7 +193,7 @@ public class CSVActivity extends AppCompatActivity {
     }
     private Contact getContact(){
         Cursor phones = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,null,null, null);
-        String[] adobe_products =new String[phones.getCount()];
+        //String[] adobe_products =new String[phones.getCount()];
         Contact contacts=new Contact();
         int i=0;
         ArrayList<item> items=new ArrayList<>();
@@ -184,21 +201,22 @@ public class CSVActivity extends AppCompatActivity {
         {
             String name=phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
             String phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-
             item person=new item();
             person.setName(name);
             person.setNumber(phoneNumber);
             items.add(person);
-            adobe_products[i++]=name+"----"+phoneNumber;
+            //adobe_products[i++]=name+"----"+phoneNumber;
             Log.e("phone",""+name+phones.getCount());
         }
         phones.close();
         contacts.setItems(items);
-        ArrayAdapter adapter = new ArrayAdapter<String>(this,
+        /*ArrayAdapter adapter = new ArrayAdapter<String>(this,
                 R.layout.list_act,adobe_products);
         ListView listView = (ListView)findViewById(R.id.list_con);
-        listView.setAdapter(adapter);
-
+        listView.setAdapter(adapter);*/
+        csvlist.setLayoutManager(new LinearLayoutManager(this));
+        csvAdapter = new CSVAdapter(items);
+        csvlist.setAdapter(csvAdapter);
         return contacts;
     }
     public Observable<Contact> getContactObservable(){
